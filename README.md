@@ -1,6 +1,6 @@
 # mini_desktop — GEC6818 桌面系统
 
-粤嵌 GEC6818（ARM Cortex-A53 armv7l, Linux 3.4.39-gec）
+粤嵌 GEC6818（armv7l, Linux 3.4.39-gec）
 嵌入式桌面系统。800×480 LCD 触摸屏，集成电子相册、红外遥控和游戏启动器。
 
 ## 功能
@@ -23,7 +23,7 @@
 | 项目 | 详情 |
 |------|------|
 | 开发板 | 粤嵌 GEC6818 |
-| 主控 | Samsung S5P6818, ARM Cortex-A53, armv7l |
+| 主控 | armv7l |
 | 系统 | Linux 3.4.39-gec, BusyBox |
 | 屏幕 | 800×480 LCD, 32bpp framebuffer (/dev/fb0) |
 | 触摸 | gslX680, 1024×600 raw → 800×480 校准 (/dev/input/event0) |
