@@ -369,26 +369,47 @@ unsigned int *bmp_load(const char *filename, int *w, int *h)
 
 void show_bmp(unsigned int *pixels, int w, int h, int x0, int y0)
 {
-    int y, x;
+    /* Pre-calc visible X range — one bounds check per row, not per pixel */
+    int x_start = 0, x_end = w;
+    if (x0 < 0) x_start = -x0;
+    if (x0 + w > fb_w) x_end = fb_w - x0;
+    if (x_start >= x_end) return;
+
+    int y;
     for (y = 0; y < h; y++)
     {
-        for (x = 0; x < w; x++)
+        int sy = y0 + y;
+        if (sy < 0 || sy >= fb_h) continue;
+
+        unsigned int *src = pixels + y * w;
+        unsigned int *dst = (unsigned int *)(fb_map + sy * fb_line + (x0 + x_start) * 4);
+
+        int x;
+        for (x = x_start; x < x_end; x++)
         {
-            int sx = x0 + x;
-            int sy = y0 + y;
-            unsigned int c = pixels[y * w + x];
+            unsigned int c = src[x];
             if ((c >> 24) == 0) continue;  /* skip fully transparent */
-            if (sx >= 0 && sx < fb_w && sy >= 0 && sy < fb_h)
-            {
-                fb_put(sx, sy, c & 0x00FFFFFF);
-            }
+            dst[x - x_start] = c & 0x00FFFFFF;
         }
     }
 }
 
 void bmp_display(unsigned int *pixels, int w, int h)
 {
-    show_bmp(pixels, w, h, (fb_w - w) / 2, (fb_h - h) / 2);
+    int x0 = (fb_w - w) / 2;
+    int y0 = (fb_h - h) / 2;
+
+    int y;
+    for (y = 0; y < h; y++)
+    {
+        int sy = y0 + y;
+        if (sy < 0 || sy >= fb_h) continue;
+        unsigned int *src = pixels + y * w;
+        unsigned int *dst = (unsigned int *)(fb_map + sy * fb_line + x0 * 4);
+        int x;
+        for (x = 0; x < w; x++)
+            dst[x] = src[x] & 0x00FFFFFF;  /* strip alpha */
+    }
 }
 
 unsigned int *bmp_reshape(unsigned int *src, int sw, int sh, int dw, int dh)
