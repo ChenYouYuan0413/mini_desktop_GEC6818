@@ -27,7 +27,7 @@
 | 系统 | Linux 3.4.39-gec, BusyBox |
 | 屏幕 | 800×480 LCD, 32bpp framebuffer (/dev/fb0) |
 | 触摸 | gslX680, 1024×600 raw → 800×480 校准 (/dev/input/event0) |
-| 红外 | 串口 /dev/ttySAC1, 9600 8N1, 模块自动去 A1F1 头，输出 3 字节用户码 |
+| 红外 | YS-IRTM 红外模块，串口 /dev/ttySAC1, 9600 8N1, 模块自动去 A1F1 头，输出 3 字节用户码 |
 | 蜂鸣器 | /sys/kernel/gec_ctrl/beep（4 字节小端 int 写入；shell echo 会写入 `0\n` 误解析为非零值）|
 | LED | /sys/class/leds/ledN/brightness（1 字节 ASCII '0'/'1' 写入）|
 
