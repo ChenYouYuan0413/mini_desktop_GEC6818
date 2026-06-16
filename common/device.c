@@ -369,28 +369,28 @@ unsigned int *bmp_load(const char *filename, int *w, int *h)
 
 void show_bmp(unsigned int *pixels, int w, int h, int x0, int y0)
 {
-    /* Pre-calc visible X range — one bounds check per row, not per pixel */
+    /* Clip X */
     int x_start = 0, x_end = w;
     if (x0 < 0) x_start = -x0;
     if (x0 + w > fb_w) x_end = fb_w - x0;
     if (x_start >= x_end) return;
+    int copy_bytes = (x_end - x_start) * 4;
 
+    /* Fast path: no clipping + matching stride → single memcpy */
+    if (x_start == 0 && x_end == w && y0 >= 0 && y0 + h <= fb_h && w * 4 == fb_line)
+    {
+        memcpy(fb_map + y0 * fb_line + x0 * 4, pixels, w * h * 4);
+        return;
+    }
+
+    /* Row-by-row fallback */
     int y;
     for (y = 0; y < h; y++)
     {
         int sy = y0 + y;
         if (sy < 0 || sy >= fb_h) continue;
-
-        unsigned int *src = pixels + y * w;
-        unsigned int *dst = (unsigned int *)(fb_map + sy * fb_line + (x0 + x_start) * 4);
-
-        int x;
-        for (x = x_start; x < x_end; x++)
-        {
-            unsigned int c = src[x];
-            if ((c >> 24) == 0) continue;  /* skip fully transparent */
-            dst[x - x_start] = c & 0x00FFFFFF;
-        }
+        memcpy(fb_map + sy * fb_line + (x0 + x_start) * 4,
+               pixels + y * w + x_start, copy_bytes);
     }
 }
 
@@ -399,16 +399,21 @@ void bmp_display(unsigned int *pixels, int w, int h)
     int x0 = (fb_w - w) / 2;
     int y0 = (fb_h - h) / 2;
 
+    /* Fast path: full-screen BMP with matching stride → single memcpy */
+    if (x0 == 0 && y0 == 0 && w * 4 == fb_line)
+    {
+        memcpy(fb_map, pixels, w * h * 4);
+        return;
+    }
+
+    /* Row-by-row fallback (stride mismatch or partial placement) */
     int y;
     for (y = 0; y < h; y++)
     {
         int sy = y0 + y;
         if (sy < 0 || sy >= fb_h) continue;
-        unsigned int *src = pixels + y * w;
-        unsigned int *dst = (unsigned int *)(fb_map + sy * fb_line + x0 * 4);
-        int x;
-        for (x = 0; x < w; x++)
-            dst[x] = src[x] & 0x00FFFFFF;  /* strip alpha */
+        memcpy(fb_map + sy * fb_line + x0 * 4,
+               pixels + y * w, w * 4);
     }
 }
 
